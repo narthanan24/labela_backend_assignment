@@ -1,30 +1,20 @@
-FROM python:3.10
-LABEL author='Label A'
+# Use an official Python runtime as a parent image
+FROM python:3.8
 
+# Set the working directory in the container
 WORKDIR /app
 
-# Environment
-RUN apt-get update
-RUN apt-get install -y bash vim nano postgresql-client
-RUN pip install --upgrade pip
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Major pinned python dependencies
-RUN pip install --no-cache-dir flake8==3.8.4 uWSGI
+# Install any needed packages specified in requirements.txt
+RUN pip install -r requirements.txt
 
-# Regular Python dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Make port 80 available to the world outside this container
+EXPOSE 80
 
-# Copy our codebase into the container
-COPY . .
+# Define environment variable
+ENV DJANGO_SETTINGS_MODULE="autocompany.settings"
 
-RUN ./manage.py collectstatic --noinput
-
-# Ops Parameters
-ENV WORKERS=2
-ENV PORT=80
-ENV PYTHONUNBUFFERED=1
-
-EXPOSE ${PORT}
-
-CMD uwsgi --http :${PORT} --processes ${WORKERS} --static-map /static=/static --module autocompany.wsgi:application
+# Run app.py when the container launches
+CMD ["python", "manage.py", "runserver", "0.0.0.0:80"]
